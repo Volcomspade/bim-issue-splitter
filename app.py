@@ -72,12 +72,11 @@ if uploaded_file:
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_", key="separator_input")
 
-    # Show example filename using selected fields only and update live
-    example_meta = next((m for m in metadata_list if all(f in m for f in reordered_fields)), metadata_list[0])
-    values = [example_meta.get(field, "NA") for field in reordered_fields if field in example_meta]
-    example_filename = f"ISSUE{separator}{example_meta['Issue ID']}"
-    if values:
-        example_filename += separator + separator.join(v.upper().replace(" ", "_") for v in values)
+    # Show example filename using only selected fields (mock values)
+    example_values = [f"{f.upper().replace(' ', '_')}_EXAMPLE" for f in reordered_fields]
+    example_filename = "ISSUE" + separator + "000216"
+    if example_values:
+        example_filename += separator + separator.join(example_values)
     example_filename += ".pdf"
     st.info(f"Example filename: {example_filename}")
 
@@ -101,6 +100,7 @@ if uploaded_file:
 
                 pdf_output = io.BytesIO()
                 writer.write(pdf_output)
+                pdf_output.seek(0)
                 zipf.writestr(filename, pdf_output.getvalue())
 
         st.download_button("Download ZIP of All Issues", data=zip_buffer.getvalue(), file_name="ISSUE_REPORTS.ZIP")

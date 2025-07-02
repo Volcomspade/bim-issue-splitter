@@ -4,6 +4,8 @@ from PyPDF2 import PdfReader, PdfWriter
 import io
 import re
 import pandas as pd
+import csv
+import unicodedata
 
 st.set_page_config(page_title="BIM 360 Issue Splitter", layout="wide")
 st.title("📄 BIM 360 Issue Report Splitter")
@@ -61,7 +63,7 @@ if uploaded_file:
 
     st.success(f"Detected {len(issue_ranges)} issues.")
 
-    # Choose fields and separator with editable table interface
+    # Choose fields and separator
     all_fields = list(metadata_list[0].keys())
     all_fields.remove("Issue ID")
 
@@ -72,17 +74,21 @@ if uploaded_file:
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_", key="separator_input")
 
-    # Show example filename using only selected fields (mock values)
+    # Show dynamic example filename using only selected fields
     example_values = [f"{f.upper().replace(' ', '_')}_EXAMPLE" for f in reordered_fields]
-    example_filename = "ISSUE" + separator + "000216"
+    example_filename = f"ISSUE{separator}000216"
     if example_values:
         example_filename += separator + separator.join(example_values)
     example_filename += ".pdf"
     st.info(f"Example filename: {example_filename}")
 
-    # Generate ZIP
+    # Generate ZIP and CSV
     if st.button("Generate Issue PDFs"):
         zip_buffer = io.BytesIO()
+        csv_output = io.StringIO()
+        csv_writer = csv.writer(csv_output)
+        csv_writer.writerow(["Filename"] + ["Issue ID"] + reordered_fields)
+
         with zipfile.ZipFile(zip_buffer, "w") as zipf:
             uploaded_file.seek(0)
             pdf = PdfReader(uploaded_file)
@@ -95,12 +101,20 @@ if uploaded_file:
                 values = [meta.get(field, "NA") for field in reordered_fields if field in meta]
                 filename = f"ISSUE{separator}{meta['Issue ID']}"
                 if values:
-                    filename += separator + separator.join(v.upper().replace(" ", "_") for v in values)
+                    cleaned_values = [
+                        re.sub(r'[^\w\-]', '', unicodedata.normalize('NFKD', v).encode('ascii', 'ignore').decode())
+                        for v in values
+                    ]
+                    filename += separator + separator.join(cleaned_values)
                 filename += ".pdf"
 
                 pdf_output = io.BytesIO()
                 writer.write(pdf_output)
                 pdf_output.seek(0)
                 zipf.writestr(filename, pdf_output.getvalue())
+
+                csv_writer.writerow([filename, meta['Issue ID']] + values)
+
+            zipf.writestr("summary.csv", csv_output.getvalue())
 
         st.download_button("Download ZIP of All Issues", data=zip_buffer.getvalue(), file_name="ISSUE_REPORTS.ZIP")

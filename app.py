@@ -73,7 +73,7 @@ if uploaded_file:
 
     # Show example filename
     example_meta = metadata_list[0]
-    example_parts = [example_meta["Issue ID"]] + [example_meta.get(field, "NA") for field in reordered]
+    example_parts = [f"ISSUE{separator}" + example_meta["Issue ID"]] + [example_meta.get(field, "NA") for field in reordered]
     example_filename = separator.join(example_parts).upper().replace(" ", "_") + ".pdf"
     st.info(f"Example filename: {example_filename}")
 
@@ -85,14 +85,16 @@ if uploaded_file:
                 for issue, meta in zip(issue_ranges, metadata_list):
                     writer = PdfWriter()
                     for p in range(issue["start"], issue["end"]):
-                        writer.add_page(pdf.pages[p].to_pdf_page())
+                        pdf_bytes = io.BytesIO(pdf.pages[p].to_pdf())
+                        reader = PdfReader(pdf_bytes)
+                        writer.add_page(reader.pages[0])
 
                     # Build filename
-                    name_parts = [meta["Issue ID"]] + [meta.get(field, "NA") for field in reordered]
+                    name_parts = [f"ISSUE{separator}" + meta["Issue ID"]] + [meta.get(field, "NA") for field in reordered]
                     filename = separator.join(name_parts).upper().replace(" ", "_") + ".pdf"
 
-                    pdf_bytes = io.BytesIO()
-                    writer.write(pdf_bytes)
-                    zipf.writestr(filename, pdf_bytes.getvalue())
+                    pdf_output = io.BytesIO()
+                    writer.write(pdf_output)
+                    zipf.writestr(filename, pdf_output.getvalue())
 
         st.download_button("Download ZIP of All Issues", data=zip_buffer.getvalue(), file_name="ISSUE_REPORTS.ZIP")

@@ -74,7 +74,7 @@ if uploaded_file:
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_", key="separator_input")
 
     # Show example filename using selected fields only and update live
-    example_meta = metadata_list[0]
+    example_meta = next((m for m in metadata_list if all(f in m for f in reordered_fields)), metadata_list[0])
     values = [example_meta.get(field, "NA") for field in reordered_fields if field in example_meta]
     example_filename = f"ISSUE{separator}{example_meta['Issue ID']}"
     if values:
@@ -90,7 +90,7 @@ if uploaded_file:
                 for issue, meta in zip(issue_ranges, metadata_list):
                     writer = PdfWriter()
                     for p in range(issue["start"], issue["end"]):
-                        writer.add_page(pdf.pages[p].to_pdf())
+                        writer.add_page(pdf.pages[p].obj)
 
                     values = [meta.get(field, "NA") for field in reordered_fields if field in meta]
                     filename = f"ISSUE{separator}{meta['Issue ID']}"

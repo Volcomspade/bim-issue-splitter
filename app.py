@@ -87,7 +87,7 @@ if uploaded_file:
         zip_buffer = io.BytesIO()
         csv_output = io.StringIO()
         csv_writer = csv.writer(csv_output)
-        csv_writer.writerow(["Filename"] + ["Issue ID"] + reordered_fields)
+        csv_writer.writerow(["Filename", "Issue ID"] + reordered_fields)
 
         with zipfile.ZipFile(zip_buffer, "w") as zipf:
             uploaded_file.seek(0)
@@ -117,7 +117,9 @@ if uploaded_file:
 
         st.download_button("Download ZIP of All Issues", data=zip_buffer.getvalue(), file_name="ISSUE_REPORTS.ZIP")
 
-        # Show summary table in app
+        # Show summary table in app with only selected columns
         summary_df = pd.read_csv(io.StringIO(csv_output.getvalue()))
+        selected_columns = ["Filename", "Issue ID"] + reordered_fields
+        summary_df = summary_df[selected_columns]
         st.write("### 📋 Summary of Generated Issues")
         st.dataframe(summary_df, use_container_width=True)

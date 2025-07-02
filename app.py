@@ -1,38 +1,38 @@
 import streamlit as st
-from utils_bim_only import detect_report_type, extract_bim_issues, get_available_fields, save_issues_as_zip
 import os
+import zipfile
+from datetime import datetime
+from utils import detect_report_type, extract_bim360_issues
+from io import BytesIO
 
-st.set_page_config(page_title="BIM 360 Issue Splitter", layout="wide")
+st.set_page_config(page_title="Issue Report Splitter")
 
-st.title("📄 BIM 360 Issue Report Splitter")
+st.title("📄 Issue Report Splitter")
 
-uploaded_file = st.file_uploader("Upload a BIM 360 Issue Report PDF", type=["pdf"])
+uploaded_file = st.file_uploader("Upload a BIM 360 Issue Report PDF", type="pdf")
 
 if uploaded_file:
-    with open("temp_input.pdf", "wb") as f:
-        f.write(uploaded_file.read())
-
-    report_type = detect_report_type("temp_input.pdf")
-
-    if report_type != "BIM 360":
-        st.error("❌ Only BIM 360 reports are supported in this version.")
-    else:
-        st.success("✅ BIM 360 Report detected.")
-        issue_pages, issue_meta = extract_bim_issues("temp_input.pdf")
-
-        if not issue_pages:
-            st.error("⚠️ No issues found in this file.")
+    with st.spinner("Analyzing report..."):
+        file_bytes = uploaded_file.read()
+        report_type = detect_report_type(file_bytes)
+        if report_type != "bim360":
+            st.error("Only BIM 360 reports are supported in this version.")
         else:
-            st.subheader("Filename Settings")
-            available_fields = get_available_fields(issue_meta)
-            selected_fields = st.multiselect("Choose filename components", available_fields, default=available_fields)
-            field_order = st.text_input("Enter field order separated by commas (e.g. IssueID,Location,EquipmentID)",
-                                        ",".join(selected_fields))
-
-            if st.button("📦 Generate ZIP"):
-                save_path = "bim360_split_output.zip"
-                save_issues_as_zip("temp_input.pdf", issue_pages, issue_meta, field_order.split(","), save_path)
-                with open(save_path, "rb") as f:
-                    st.download_button("⬇️ Download Split Issues ZIP", f, file_name="bim360_split_issues.zip")
-
-                st.success("ZIP file created.")
+            st.success("BIM 360 report detected!")
+            filename_option = st.selectbox("Choose filename format:", [
+                "{IssueID}_{Location}",
+                "{IssueID}_{Location}_{EquipmentID}",
+                "{IssueID}_{Location}_{LocationDetail}_{EquipmentID}"
+            ])
+            if st.button("Split Report"):
+                with st.spinner("Splitting issues..."):
+                    issues = extract_bim360_issues(file_bytes, filename_option)
+                    if not issues:
+                        st.error("No issues found.")
+                    else:
+                        zip_buffer = BytesIO()
+                        with zipfile.ZipFile(zip_buffer, "w") as zipf:
+                            for name, pdf_bytes in issues.items():
+                                zipf.writestr(f"{name}.pdf", pdf_bytes)
+                        zip_filename = f"Issue_Report_{datetime.now().strftime('%Y%m%d')}.zip"
+                        st.download_button("📦 Download ZIP", zip_buffer.getvalue(), file_name=zip_filename)

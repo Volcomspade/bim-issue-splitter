@@ -1,4 +1,3 @@
-
 import streamlit as st
 import zipfile
 import pdfplumber
@@ -66,10 +65,17 @@ if uploaded_file:
     all_fields = list(metadata_list[0].keys())
     all_fields.remove("Issue ID")
 
-    selected_fields = st.multiselect("Select fields for filename (drag to reorder):", all_fields, default=all_fields)
+    default_fields = ["Location Detail", "Equipment ID"]
+    selected_fields = st.multiselect("Select additional fields for filename (drag to reorder):", all_fields, default=default_fields)
     reordered = st.multiselect("Reorder fields here:", selected_fields, default=selected_fields)
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_")
+
+    # Show example filename
+    example_meta = metadata_list[0]
+    example_parts = [example_meta["Issue ID"]] + [example_meta.get(field, "NA") for field in reordered]
+    example_filename = separator.join(example_parts).upper().replace(" ", "_") + ".pdf"
+    st.info(f"Example filename: {example_filename}")
 
     # Generate ZIP
     if st.button("Generate Issue PDFs"):
@@ -82,7 +88,7 @@ if uploaded_file:
                         writer.add_page(pdf.pages[p].to_pdf_page())
 
                     # Build filename
-                    name_parts = [issue["Issue ID"]] + [meta.get(field, "NA") for field in reordered]
+                    name_parts = [meta["Issue ID"]] + [meta.get(field, "NA") for field in reordered]
                     filename = separator.join(name_parts).upper().replace(" ", "_") + ".pdf"
 
                     pdf_bytes = io.BytesIO()

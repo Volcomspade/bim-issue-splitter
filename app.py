@@ -62,23 +62,24 @@ if uploaded_file:
 
     st.success(f"Detected {len(issue_ranges)} issues.")
 
-    # Choose fields and separator
+    # Choose fields and separator with editable table interface
     all_fields = list(metadata_list[0].keys())
     all_fields.remove("Issue ID")
 
     st.write("### Customize Filename Fields")
-    selected_fields = st.multiselect(
-        "Select fields to include in filename (in order):",
-        options=all_fields,
-        default=["Location Detail"]
-    )
+    default_df = pd.DataFrame({"Field": ["Location Detail"] + [f for f in all_fields if f != "Location Detail"]})
+    field_df = st.data_editor(default_df, num_rows="dynamic", use_container_width=True)
+    reordered_fields = field_df["Field"].dropna().tolist()
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_")
 
-    # Show example filename using only selected fields
+    # Show example filename using selected fields
     example_meta = metadata_list[0]
-    selected_parts = [example_meta.get(field, "NA") for field in selected_fields]
-    example_filename = f"ISSUE{separator}{example_meta['Issue ID']}" + (separator + separator.join(selected_parts).upper().replace(" ", "_") if selected_parts else "") + ".pdf"
+    example_parts = [example_meta.get(field, "NA") for field in reordered_fields]
+    example_filename = f"ISSUE{separator}{example_meta['Issue ID']}"
+    if example_parts:
+        example_filename += separator + separator.join(example_parts).upper().replace(" ", "_")
+    example_filename += ".pdf"
     st.info(f"Example filename: {example_filename}")
 
     # Generate ZIP
@@ -93,9 +94,11 @@ if uploaded_file:
                         reader = PdfReader(io.BytesIO(pdf_page))
                         writer.add_page(reader.pages[0])
 
-                    # Build filename
-                    selected_values = [meta.get(field, "NA") for field in selected_fields]
-                    filename = f"ISSUE{separator}{meta['Issue ID']}" + (separator + separator.join(selected_values).upper().replace(" ", "_") if selected_values else "") + ".pdf"
+                    values = [meta.get(field, "NA") for field in reordered_fields]
+                    filename = f"ISSUE{separator}{meta['Issue ID']}"
+                    if values:
+                        filename += separator + separator.join(values).upper().replace(" ", "_")
+                    filename += ".pdf"
 
                     pdf_output = io.BytesIO()
                     writer.write(pdf_output)

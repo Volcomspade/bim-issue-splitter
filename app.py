@@ -74,20 +74,22 @@ if uploaded_file:
         default=["Location Detail", "Location"]
     )
 
-    # Fallback for ordering fields (no experimental_data_editor on Streamlit Cloud)
     reordered_fields = selected_fields
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_", key="separator_input")
 
-    # Update example filename based on selected and ordered fields
-    example_values = [
-        f"{re.sub(r'[^\\w\-]', '', f.upper().replace(' ', '_'))}_EXAMPLE" for f in reordered_fields
-    ]
-    example_filename = f"ISSUE{separator}000216"
-    if example_values:
-        example_filename += separator + separator.join(example_values)
-    example_filename += ".pdf"
-    st.info(f"Example filename: {example_filename}")
+    # Use actual metadata to build example filename
+    if metadata_list:
+        first_issue_meta = metadata_list[0]
+        example_values = [
+            re.sub(r'[^\w\-]', '', unicodedata.normalize('NFKD', str(first_issue_meta.get(f, 'NA'))).encode('ascii', 'ignore').decode())
+            for f in reordered_fields
+        ]
+        example_filename = f"ISSUE{separator}{first_issue_meta['Issue ID']}"
+        if example_values:
+            example_filename += separator + separator.join(example_values)
+        example_filename += ".pdf"
+        st.info(f"Example filename: {example_filename}")
 
     # Generate ZIP and CSV
     if st.button("Generate Issue PDFs"):
@@ -107,7 +109,7 @@ if uploaded_file:
 
                 values = [meta.get(field, "NA") for field in reordered_fields]
                 cleaned_values = [
-                    re.sub(r'[^\\w\-]', '', unicodedata.normalize('NFKD', str(v)).encode('ascii', 'ignore').decode())
+                    re.sub(r'[^\w\-]', '', unicodedata.normalize('NFKD', str(v)).encode('ascii', 'ignore').decode())
                     for v in values
                 ]
                 filename = f"ISSUE{separator}{meta['Issue ID']}"

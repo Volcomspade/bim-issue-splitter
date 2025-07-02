@@ -118,3 +118,8 @@ if uploaded_file:
             zipf.writestr("summary.csv", csv_output.getvalue())
 
         st.download_button("Download ZIP of All Issues", data=zip_buffer.getvalue(), file_name="ISSUE_REPORTS.ZIP")
+
+        # Show summary table in app
+        summary_df = pd.read_csv(io.StringIO(csv_output.getvalue()))
+        st.write("### 📋 Summary of Generated Issues")
+        st.dataframe(summary_df, use_container_width=True)

@@ -1,7 +1,6 @@
 import streamlit as st
 import zipfile
-import pdfplumber
-from PyPDF2 import PdfWriter
+from PyPDF2 import PdfReader, PdfWriter
 import io
 import re
 import pandas as pd
@@ -12,8 +11,8 @@ st.title("📄 BIM 360 Issue Report Splitter")
 uploaded_file = st.file_uploader("Upload BIM 360 Issue Report PDF", type=["pdf"])
 
 if uploaded_file:
-    with pdfplumber.open(uploaded_file) as pdf:
-        pages_text = [page.extract_text() for page in pdf.pages]
+    pdf_reader = PdfReader(uploaded_file)
+    pages_text = [page.extract_text() for page in pdf_reader.pages]
 
     # Extract page ranges
     issue_ids = []
@@ -86,20 +85,22 @@ if uploaded_file:
     if st.button("Generate Issue PDFs"):
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zipf:
-            with pdfplumber.open(uploaded_file) as pdf:
-                for issue, meta in zip(issue_ranges, metadata_list):
-                    writer = PdfWriter()
-                    for p in range(issue["start"], issue["end"]):
-                        writer.add_page(pdf.pages[p].obj)
+            uploaded_file.seek(0)
+            pdf = PdfReader(uploaded_file)
 
-                    values = [meta.get(field, "NA") for field in reordered_fields if field in meta]
-                    filename = f"ISSUE{separator}{meta['Issue ID']}"
-                    if values:
-                        filename += separator + separator.join(v.upper().replace(" ", "_") for v in values)
-                    filename += ".pdf"
+            for issue, meta in zip(issue_ranges, metadata_list):
+                writer = PdfWriter()
+                for p in range(issue["start"], issue["end"]):
+                    writer.add_page(pdf.pages[p])
 
-                    pdf_output = io.BytesIO()
-                    writer.write(pdf_output)
-                    zipf.writestr(filename, pdf_output.getvalue())
+                values = [meta.get(field, "NA") for field in reordered_fields if field in meta]
+                filename = f"ISSUE{separator}{meta['Issue ID']}"
+                if values:
+                    filename += separator + separator.join(v.upper().replace(" ", "_") for v in values)
+                filename += ".pdf"
+
+                pdf_output = io.BytesIO()
+                writer.write(pdf_output)
+                zipf.writestr(filename, pdf_output.getvalue())
 
         st.download_button("Download ZIP of All Issues", data=zip_buffer.getvalue(), file_name="ISSUE_REPORTS.ZIP")

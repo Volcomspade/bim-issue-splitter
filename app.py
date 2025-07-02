@@ -34,7 +34,7 @@ if uploaded_file:
         for i in range(len(issue_ids))
     ]
 
-    # Extract metadata from each issue's first page
+    # Extract metadata
     metadata_list = []
     for issue in issue_ranges:
         text = pages_text[issue["start"]]
@@ -66,15 +66,13 @@ if uploaded_file:
     # Choose fields and separator
     all_fields = list(metadata_list[0].keys())
     all_fields.remove("Issue ID")
-
-    st.write("### Customize Filename Fields")
-    default_df = pd.DataFrame({"Field": ["Location Detail"] + [f for f in all_fields if f != "Location Detail"]})
+    default_df = pd.DataFrame({"Field": ["Location Detail", "Location", "Equipment ID"]})
     field_df = st.data_editor(default_df, num_rows="dynamic", use_container_width=True, key="field_editor")
     reordered_fields = field_df["Field"].dropna().tolist()
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_", key="separator_input")
 
-    # Show dynamic example filename using only selected fields
+    # Show dynamic example filename
     example_values = [f"{field.upper().replace(' ', '_')}_EXAMPLE" for field in reordered_fields]
     example_filename = f"ISSUE{separator}000216"
     if example_values:
@@ -82,7 +80,6 @@ if uploaded_file:
     example_filename += ".pdf"
     st.info(f"Example filename: {example_filename}")
 
-    # Generate ZIP and CSV
     if st.button("Generate Issue PDFs"):
         zip_buffer = io.BytesIO()
         csv_output = io.StringIO()
@@ -98,7 +95,7 @@ if uploaded_file:
                 for p in range(issue["start"], issue["end"]):
                     writer.add_page(pdf.pages[p])
 
-                values = [meta.get(field, "NA") for field in reordered_fields if field in meta]
+                values = [meta.get(field, "NA") for field in reordered_fields]
                 cleaned_values = [
                     re.sub(r'[^\w\-]', '', unicodedata.normalize('NFKD', str(v)).encode('ascii', 'ignore').decode())
                     for v in values
@@ -117,9 +114,7 @@ if uploaded_file:
 
         st.download_button("Download ZIP of All Issues", data=zip_buffer.getvalue(), file_name="ISSUE_REPORTS.ZIP")
 
-        # Show summary table in app with only selected columns
+        # ✅ Show filtered summary below
         summary_df = pd.read_csv(io.StringIO(csv_output.getvalue()))
-        selected_columns = ["Filename", "Issue ID"] + reordered_fields
-        summary_df = summary_df[selected_columns]
         st.write("### 📋 Summary of Generated Issues")
         st.dataframe(summary_df, use_container_width=True)

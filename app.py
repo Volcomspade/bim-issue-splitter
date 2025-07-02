@@ -68,17 +68,17 @@ if uploaded_file:
 
     st.write("### Customize Filename Fields")
     default_df = pd.DataFrame({"Field": ["Location Detail"] + [f for f in all_fields if f != "Location Detail"]})
-    field_df = st.data_editor(default_df, num_rows="dynamic", use_container_width=True)
+    field_df = st.data_editor(default_df, num_rows="dynamic", use_container_width=True, key="field_editor")
     reordered_fields = field_df["Field"].dropna().tolist()
 
-    separator = st.text_input("Filename separator (e.g. _ or -):", value="_")
+    separator = st.text_input("Filename separator (e.g. _ or -):", value="_", key="separator_input")
 
-    # Show example filename using selected fields
+    # Show example filename using selected fields only
     example_meta = metadata_list[0]
-    example_parts = [example_meta.get(field, "NA") for field in reordered_fields]
+    selected_parts = [example_meta.get(field, "NA") for field in reordered_fields if field in example_meta]
     example_filename = f"ISSUE{separator}{example_meta['Issue ID']}"
-    if example_parts:
-        example_filename += separator + separator.join(example_parts).upper().replace(" ", "_")
+    if selected_parts:
+        example_filename += separator + separator.join(selected_parts).upper().replace(" ", "_")
     example_filename += ".pdf"
     st.info(f"Example filename: {example_filename}")
 
@@ -94,7 +94,7 @@ if uploaded_file:
                         reader = PdfReader(io.BytesIO(pdf_page))
                         writer.add_page(reader.pages[0])
 
-                    values = [meta.get(field, "NA") for field in reordered_fields]
+                    values = [meta.get(field, "NA") for field in reordered_fields if field in meta]
                     filename = f"ISSUE{separator}{meta['Issue ID']}"
                     if values:
                         filename += separator + separator.join(values).upper().replace(" ", "_")

@@ -75,7 +75,7 @@ if uploaded_file:
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_", key="separator_input")
 
     # Show dynamic example filename using only selected fields
-    example_values = [f"{f.upper().replace(' ', '_')}_EXAMPLE" for f in reordered_fields]
+    example_values = [f"{field.upper().replace(' ', '_')}_EXAMPLE" for field in reordered_fields]
     example_filename = f"ISSUE{separator}000216"
     if example_values:
         example_filename += separator + separator.join(example_values)
@@ -99,12 +99,12 @@ if uploaded_file:
                     writer.add_page(pdf.pages[p])
 
                 values = [meta.get(field, "NA") for field in reordered_fields if field in meta]
+                cleaned_values = [
+                    re.sub(r'[^\w\-]', '', unicodedata.normalize('NFKD', str(v)).encode('ascii', 'ignore').decode())
+                    for v in values
+                ]
                 filename = f"ISSUE{separator}{meta['Issue ID']}"
-                if values:
-                    cleaned_values = [
-                        re.sub(r'[^\w\-]', '', unicodedata.normalize('NFKD', v).encode('ascii', 'ignore').decode())
-                        for v in values
-                    ]
+                if cleaned_values:
                     filename += separator + separator.join(cleaned_values)
                 filename += ".pdf"
 
@@ -114,8 +114,6 @@ if uploaded_file:
                 zipf.writestr(filename, pdf_output.getvalue())
 
                 csv_writer.writerow([filename, meta['Issue ID']] + values)
-
-            zipf.writestr("summary.csv", csv_output.getvalue())
 
         st.download_button("Download ZIP of All Issues", data=zip_buffer.getvalue(), file_name="ISSUE_REPORTS.ZIP")
 

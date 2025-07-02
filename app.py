@@ -66,17 +66,18 @@ if uploaded_file:
     all_fields = list(metadata_list[0].keys())
     all_fields.remove("Issue ID")
 
-    default_fields = ["Location Detail", "Equipment ID"]
     st.write("### Customize Filename Fields")
-    ordered_fields_df = pd.DataFrame({"Field": default_fields + [f for f in all_fields if f not in default_fields]})
-    ordered_fields = st.data_editor(ordered_fields_df, num_rows="dynamic", use_container_width=True)
-    reordered = ordered_fields["Field"].dropna().tolist()
+    selected_fields = st.multiselect(
+        "Select fields to include in filename (in order):",
+        options=all_fields,
+        default=["Location Detail"]
+    )
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_")
 
     # Show example filename using only selected fields
     example_meta = metadata_list[0]
-    selected_parts = [example_meta.get(field, "NA") for field in reordered]
+    selected_parts = [example_meta.get(field, "NA") for field in selected_fields]
     example_filename = f"ISSUE{separator}{example_meta['Issue ID']}" + (separator + separator.join(selected_parts).upper().replace(" ", "_") if selected_parts else "") + ".pdf"
     st.info(f"Example filename: {example_filename}")
 
@@ -93,7 +94,7 @@ if uploaded_file:
                         writer.add_page(reader.pages[0])
 
                     # Build filename
-                    selected_values = [meta.get(field, "NA") for field in reordered]
+                    selected_values = [meta.get(field, "NA") for field in selected_fields]
                     filename = f"ISSUE{separator}{meta['Issue ID']}" + (separator + separator.join(selected_values).upper().replace(" ", "_") if selected_values else "") + ".pdf"
 
                     pdf_output = io.BytesIO()

@@ -74,10 +74,10 @@ if uploaded_file:
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_")
 
-    # Show example filename
+    # Show example filename using only selected fields
     example_meta = metadata_list[0]
-    example_parts = [f"ISSUE{separator}" + example_meta["Issue ID"]] + [example_meta.get(field, "NA") for field in reordered]
-    example_filename = separator.join(example_parts).upper().replace(" ", "_") + ".pdf"
+    selected_parts = [example_meta.get(field, "NA") for field in reordered]
+    example_filename = f"ISSUE{separator}{example_meta['Issue ID']}" + (separator + separator.join(selected_parts).upper().replace(" ", "_") if selected_parts else "") + ".pdf"
     st.info(f"Example filename: {example_filename}")
 
     # Generate ZIP
@@ -93,8 +93,8 @@ if uploaded_file:
                         writer.add_page(reader.pages[0])
 
                     # Build filename
-                    name_parts = [f"ISSUE{separator}" + meta["Issue ID"]] + [meta.get(field, "NA") for field in reordered]
-                    filename = separator.join(name_parts).upper().replace(" ", "_") + ".pdf"
+                    selected_values = [meta.get(field, "NA") for field in reordered]
+                    filename = f"ISSUE{separator}{meta['Issue ID']}" + (separator + separator.join(selected_values).upper().replace(" ", "_") if selected_values else "") + ".pdf"
 
                     pdf_output = io.BytesIO()
                     writer.write(pdf_output)

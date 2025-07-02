@@ -75,10 +75,10 @@ if uploaded_file:
 
     # Show example filename using selected fields only and update live
     example_meta = metadata_list[0]
-    selected_parts = [example_meta.get(field, "NA") for field in reordered_fields if field in example_meta]
+    values = [example_meta.get(field, "NA") for field in reordered_fields if field in example_meta]
     example_filename = f"ISSUE{separator}{example_meta['Issue ID']}"
-    if selected_parts:
-        example_filename += separator + separator.join(selected_parts).upper().replace(" ", "_")
+    if values:
+        example_filename += separator + separator.join(v.upper().replace(" ", "_") for v in values)
     example_filename += ".pdf"
     st.info(f"Example filename: {example_filename}")
 
@@ -95,7 +95,7 @@ if uploaded_file:
                     values = [meta.get(field, "NA") for field in reordered_fields if field in meta]
                     filename = f"ISSUE{separator}{meta['Issue ID']}"
                     if values:
-                        filename += separator + separator.join(values).upper().replace(" ", "_")
+                        filename += separator + separator.join(v.upper().replace(" ", "_") for v in values)
                     filename += ".pdf"
 
                     pdf_output = io.BytesIO()

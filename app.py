@@ -4,6 +4,7 @@ import pdfplumber
 from PyPDF2 import PdfWriter, PdfReader
 import io
 import re
+import pandas as pd
 
 st.set_page_config(page_title="BIM 360 Issue Splitter", layout="wide")
 st.title("📄 BIM 360 Issue Report Splitter")
@@ -67,12 +68,8 @@ if uploaded_file:
 
     default_fields = ["Location Detail", "Equipment ID"]
     st.write("### Customize Filename Fields")
-    ordered_fields = st.experimental_data_editor(
-        pd.DataFrame({"Field": default_fields + [f for f in all_fields if f not in default_fields]}),
-        num_rows="dynamic",
-        use_container_width=True,
-        key="field_editor"
-    )
+    ordered_fields_df = pd.DataFrame({"Field": default_fields + [f for f in all_fields if f not in default_fields]})
+    ordered_fields = st.data_editor(ordered_fields_df, num_rows="dynamic", use_container_width=True)
     reordered = ordered_fields["Field"].dropna().tolist()
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_")

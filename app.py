@@ -1,7 +1,7 @@
 import streamlit as st
 import zipfile
 import pdfplumber
-from PyPDF2 import PdfWriter, PdfReader
+from PyPDF2 import PdfWriter
 import io
 import re
 import pandas as pd
@@ -50,7 +50,7 @@ if uploaded_file:
                 ("Equipment Type", "Equipment Type"),
                 ("Project Activity", "Project Activity.*?"),
                 ("Responsible Person", "Responsible Person"),
-                ("Rework Required", "Rework Required\?"),
+                ("Rework Required", "Rework Required\\?"),
                 ("Root Cause", "Root cause"),
                 ("Priority", "Priority")
             ]
@@ -73,7 +73,7 @@ if uploaded_file:
 
     separator = st.text_input("Filename separator (e.g. _ or -):", value="_", key="separator_input")
 
-    # Show example filename using selected fields only
+    # Show example filename using selected fields only and update live
     example_meta = metadata_list[0]
     selected_parts = [example_meta.get(field, "NA") for field in reordered_fields if field in example_meta]
     example_filename = f"ISSUE{separator}{example_meta['Issue ID']}"
@@ -90,9 +90,7 @@ if uploaded_file:
                 for issue, meta in zip(issue_ranges, metadata_list):
                     writer = PdfWriter()
                     for p in range(issue["start"], issue["end"]):
-                        pdf_page = pdf.pages[p].pdf
-                        reader = PdfReader(io.BytesIO(pdf_page))
-                        writer.add_page(reader.pages[0])
+                        writer.add_page(pdf.pages[p].to_pdf())
 
                     values = [meta.get(field, "NA") for field in reordered_fields if field in meta]
                     filename = f"ISSUE{separator}{meta['Issue ID']}"

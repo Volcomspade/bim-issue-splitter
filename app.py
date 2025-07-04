@@ -36,7 +36,42 @@ if uploaded_file:
 
     # Extract metadata from each issue's first page
     metadata_list = []
-    for issue in issue_ranges:
+    
+    st.markdown("### 🔧 Customize Filename Format")
+    st.markdown("Use curly braces like `{ID}`, `{Location}`, `{Location Detail}`, `{Equipment ID}`, `{Status}`")
+
+    default_pattern = "Issue_{ID}_{Location Detail}"
+    filename_pattern = st.text_input("Filename Pattern", value=default_pattern, help="Use available fields in {braces} to generate filenames.")
+
+    st.markdown("**Insert Field:**")
+    col1, col2, col3, col4, col5 = st.columns(5)
+    if col1.button("{ID}"):
+        st.session_state.filename_pattern = st.session_state.get("filename_pattern", default_pattern) + "{ID}"
+    if col2.button("{Location}"):
+        st.session_state.filename_pattern = st.session_state.get("filename_pattern", default_pattern) + "{Location}"
+    if col3.button("{Location Detail}"):
+        st.session_state.filename_pattern = st.session_state.get("filename_pattern", default_pattern) + "{Location Detail}"
+    if col4.button("{Equipment ID}"):
+        st.session_state.filename_pattern = st.session_state.get("filename_pattern", default_pattern) + "{Equipment ID}"
+    if col5.button("{Status}"):
+        st.session_state.filename_pattern = st.session_state.get("filename_pattern", default_pattern) + "{Status}"
+
+    if "filename_pattern" in st.session_state:
+        filename_pattern = st.session_state.filename_pattern
+
+    # Preview logic
+    def preview_filename(issue_meta, pattern):
+        try:
+            return pattern.format(**issue_meta)
+        except KeyError:
+            return "Missing fields"
+
+    st.markdown("#### 📂 Filename Previews")
+    for meta in metadata_list[:5]:
+        st.markdown("- " + preview_filename(meta, filename_pattern))
+
+
+for issue in issue_ranges:
         text = pages_text[issue["start"]]
         data = {"Issue ID": issue["Issue ID"]}
         if text:

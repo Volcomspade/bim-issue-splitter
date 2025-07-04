@@ -1,8 +1,8 @@
 diff --git a/app.py b/app.py
-index 3f4382742b306f42449fa64580ff42cadb29dc8f..5b69d4876e1f5f2dd7f3492243cab5ccba949fa5 100644
+index 3f4382742b306f42449fa64580ff42cadb29dc8f..a1740f4b3f2bc260c97476b560df5a806417c8d7 100644
 --- a/app.py
 +++ b/app.py
-@@ -1,224 +1,165 @@
+@@ -1,224 +1,174 @@
 -diff --git a/app.py b/app.py
 -index 44733a9a604edb29f8868f7956105dc36e991d84..a754fdd85be2c1e0e3ca2bd8e009f9edfa01a20d 100644
 ---- a/app.py
@@ -248,9 +248,18 @@ index 3f4382742b306f42449fa64580ff42cadb29dc8f..5b69d4876e1f5f2dd7f3492243cab5cc
 +
 +
 +def normalize_issue_id(raw: str) -> str:
-+    """Return the issue ID without any leading zeros."""
-+    cleaned = str(raw).lstrip("0")
-+    return cleaned or "0"
++    """Return the issue ID without leading or trailing zeros."""
++    raw_str = str(raw).strip()
++
++    # Extract the numeric portion if present
++    match = re.search(r"\d+", raw_str)
++    if match:
++        digits = match.group(0)
++        digits = digits.lstrip("0").rstrip("0")
++        return digits or "0"
++
++    # Fall back to original string if no digits are found
++    return raw_str
 +
 +if uploaded_file:
 +    pdf_reader = PdfReader(uploaded_file)

@@ -28,7 +28,7 @@ if uploaded_file:
         if text:
             match = re.search(r"ID\s+(\d{6})", text)
             if match:
-                issue_id = match.group(1)
+                issue_id = str(int(match.group(1)))
                 if not issue_ids or issue_id != issue_ids[-1]:
                     issue_ids.append(issue_id)
                     issue_starts.append(i)

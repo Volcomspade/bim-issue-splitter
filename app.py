@@ -1,8 +1,8 @@
 diff --git a/app.py b/app.py
-index 3f4382742b306f42449fa64580ff42cadb29dc8f..b0ba45c05688581ef6b5d0621400d0bb753697c3 100644
+index 3f4382742b306f42449fa64580ff42cadb29dc8f..5b69d4876e1f5f2dd7f3492243cab5ccba949fa5 100644
 --- a/app.py
 +++ b/app.py
-@@ -1,224 +1,146 @@
+@@ -1,224 +1,165 @@
 -diff --git a/app.py b/app.py
 -index 44733a9a604edb29f8868f7956105dc36e991d84..a754fdd85be2c1e0e3ca2bd8e009f9edfa01a20d 100644
 ---- a/app.py
@@ -248,10 +248,9 @@ index 3f4382742b306f42449fa64580ff42cadb29dc8f..b0ba45c05688581ef6b5d0621400d0bb
 +
 +
 +def normalize_issue_id(raw: str) -> str:
-+    """Trim leading and trailing zeros from an issue ID string."""
-+    cleaned = raw.lstrip("0") or "0"
-+    cleaned = cleaned.rstrip("0") or "0"
-+    return cleaned
++    """Return the issue ID without any leading zeros."""
++    cleaned = str(raw).lstrip("0")
++    return cleaned or "0"
 +
 +if uploaded_file:
 +    pdf_reader = PdfReader(uploaded_file)
@@ -329,7 +328,12 @@ index 3f4382742b306f42449fa64580ff42cadb29dc8f..b0ba45c05688581ef6b5d0621400d0bb
 +
 +    # Preview example filename
 +    def build_filename(meta: dict) -> str:
-+        clean_meta = {k: sanitize(meta.get(k, "NA")) for k in available_fields}
++        clean_meta = {}
++        for key in available_fields:
++            value = meta.get(key, "NA")
++            if key == "Issue ID":
++                value = normalize_issue_id(value)
++            clean_meta[key] = sanitize(value)
 +        try:
 +            return st.session_state.filename_pattern.format(**clean_meta) + ".pdf"
 +        except KeyError as e:
@@ -354,15 +358,30 @@ index 3f4382742b306f42449fa64580ff42cadb29dc8f..b0ba45c05688581ef6b5d0621400d0bb
 +                for p in range(issue["start"], issue["end"]):
 +                    writer.add_page(pdf.pages[p])
 +
-+                clean_meta = {k: sanitize(meta.get(k, "NA")) for k in available_fields}
-+                filename = st.session_state.filename_pattern.format(**clean_meta) + ".pdf"
++                clean_meta = {}
++                for key in available_fields:
++                    value = meta.get(key, "NA")
++                    if key == "Issue ID":
++                        value = normalize_issue_id(value)
++                    clean_meta[key] = sanitize(value)
++
++                filename = (
++                    st.session_state.filename_pattern.format(**clean_meta) + ".pdf"
++                )
 +
 +                pdf_output = io.BytesIO()
 +                writer.write(pdf_output)
 +                pdf_output.seek(0)
 +                zipf.writestr(filename, pdf_output.getvalue())
 +
-+                csv_writer.writerow([filename] + [meta.get(f, "") for f in available_fields])
++                row_values = []
++                for key in available_fields:
++                    value = meta.get(key, "")
++                    if key == "Issue ID":
++                        value = normalize_issue_id(value)
++                    row_values.append(value)
++
++                csv_writer.writerow([filename] + row_values)
 +
 +        st.download_button(
 +            "Download ZIP of All Issues",

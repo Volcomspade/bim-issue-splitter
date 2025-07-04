@@ -19,12 +19,18 @@ def sanitize(value: str) -> str:
 
 
 def normalize_issue_id(raw: str) -> str:
-    """Return the issue ID without leading zeros."""
+    """Return the issue ID without leading or trailing zeros."""
     raw_str = str(raw).strip()
-    if raw_str.isdigit():
-        return str(int(raw_str))
-    cleaned = raw_str.lstrip("0")
-    return cleaned or "0"
+
+    # Extract the numeric portion if present
+    match = re.search(r"\d+", raw_str)
+    if match:
+        digits = match.group(0)
+        digits = digits.lstrip("0").rstrip("0")
+        return digits or "0"
+
+    # Fall back to original string if no digits are found
+    return raw_str
 
 if uploaded_file:
     pdf_reader = PdfReader(uploaded_file)

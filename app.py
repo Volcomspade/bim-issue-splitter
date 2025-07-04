@@ -35,7 +35,8 @@ index 44733a9a604edb29f8868f7956105dc36e991d84..a754fdd85be2c1e0e3ca2bd8e009f9ed
              match = re.search(r"ID\s+(\d{6})", text)
              if match:
 -                issue_id = match.group(1)
-+                issue_id = str(int(match.group(1)))
++                issue_raw = match.group(1)
++                issue_id = issue_raw.lstrip("0").rstrip("0") or "0"
                  if not issue_ids or issue_id != issue_ids[-1]:
                      issue_ids.append(issue_id)
                      issue_starts.append(i)

@@ -17,6 +17,13 @@ def sanitize(value: str) -> str:
     """Return a filesystem friendly representation of value."""
     return re.sub(r"[^\w\-]", "", unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode())
 
+
+def normalize_issue_id(raw: str) -> str:
+    """Trim leading and trailing zeros from an issue ID string."""
+    cleaned = raw.lstrip("0") or "0"
+    cleaned = cleaned.rstrip("0") or "0"
+    return cleaned
+
 if uploaded_file:
     pdf_reader = PdfReader(uploaded_file)
     pages_text = [page.extract_text() for page in pdf_reader.pages]
@@ -28,10 +35,7 @@ if uploaded_file:
         if text:
             match = re.search(r"ID\s+(\d+)", text)
             if match:
-                raw_id = match.group(1)
-                issue_id = str(int(raw_id))
-                if issue_id != "0":
-                    issue_id = issue_id.rstrip("0") or "0"
+                issue_id = normalize_issue_id(match.group(1))
                 if not issue_ids or issue_id != issue_ids[-1]:
                     issue_ids.append(issue_id)
                     issue_starts.append(i)

@@ -1,18 +1,4 @@
-diff --git a/app.py b/app.py
-index 0d18796a45656c307119d6c795e6f05771c20135..78722e875642c66162ad17eac24e26c62d19dc8a 100644
---- a/app.py
-+++ b/app.py
-@@ -1,403 +1,174 @@
--diff --git a/app.py b/app.py
--index 3f4382742b306f42449fa64580ff42cadb29dc8f..a1740f4b3f2bc260c97476b560df5a806417c8d7 100644
----- a/app.py
--+++ b/app.py
--@@ -1,224 +1,174 @@
---diff --git a/app.py b/app.py
---index 44733a9a604edb29f8868f7956105dc36e991d84..a754fdd85be2c1e0e3ca2bd8e009f9edfa01a20d 100644
------ a/app.py
---+++ b/app.py
---@@ -1,167 +1,139 @@
+
 -- import streamlit as st
 -- import zipfile
 -- from PyPDF2 import PdfReader, PdfWriter
